@@ -1,6 +1,7 @@
 import Vapor
 
 /// The context for a queue.
+@available(macOS 12.0.0, *)
 public struct QueueContext {
     /// The name of the queue
     public let queueName: QueueName

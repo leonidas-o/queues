@@ -1,4 +1,5 @@
 /// A `Service` to configure `Queues`s
+@available(macOS 12.0.0, *)
 public struct QueuesConfiguration {
     /// The number of seconds to wait before checking for the next job. Defaults to `1`
     public var refreshInterval: TimeAmount
@@ -90,5 +91,28 @@ public struct QueuesConfiguration {
     {
         self.logger.trace("Adding notification hook")
         self.notificationHooks.append(hook)
+    }
+    
+    enum NotificationType {
+        case dispatched
+        case didDequeue
+        case success
+        case error
+    }
+    
+    func dispatchNotifications(job: JobEventData? = nil, id: String, error: Error? = nil, type: NotificationType) {
+        for hook in notificationHooks {
+            if type == .dispatched {
+                guard let job = job else { continue }
+                Task { try await hook.dispatched(job: job) }
+            } else if type == .didDequeue {
+                Task { try await hook.didDequeue(jobId: id) }
+            } else if type == .success {
+                Task { try await hook.success(jobId: id) }
+            } else if type == .error {
+                guard let error = error else { continue }
+                Task { try await hook.error(jobId: id, error: error) }
+            }
+        }
     }
 }

@@ -1,50 +1,48 @@
 import NIO
 
 /// Represents an object that can receive notifications about job statuses
+@available(macOS 12.0.0, *)
 public protocol JobEventDelegate {
 
     /// Called when the job is first dispatched
     /// - Parameters:
     ///   - job: The `JobData` associated with the job
-    ///   - eventLoop: The eventLoop
-    func dispatched(job: JobEventData, eventLoop: EventLoop) -> EventLoopFuture<Void>
+    func dispatched(job: JobEventData) async throws -> Void
 
     /// Called when the job is dequeued
     /// - Parameters:
     ///   - jobId: The id of the Job
-    ///   - eventLoop: The eventLoop
-    func didDequeue(jobId: String, eventLoop: EventLoop) -> EventLoopFuture<Void>
+    func didDequeue(jobId: String) async throws -> Void
 
 
     /// Called when the job succeeds
     /// - Parameters:
     ///   - jobId: The id of the Job
-    ///   - eventLoop: The eventLoop
-    func success(jobId: String, eventLoop: EventLoop) -> EventLoopFuture<Void>
+    func success(jobId: String) async throws -> Void
 
     /// Called when the job returns an error
     /// - Parameters:
     ///   - jobId: The id of the Job
     ///   - error: The error that caused the job to fail
-    ///   - eventLoop: The eventLoop
-    func error(jobId: String, error: Error, eventLoop: EventLoop) -> EventLoopFuture<Void>
+    func error(jobId: String, error: Error) async throws -> Void
 }
 
+@available(macOS 12.0.0, *)
 extension JobEventDelegate {
-    public func dispatched(job: JobEventData, eventLoop: EventLoop) -> EventLoopFuture<Void> {
-        eventLoop.future()
+    public func dispatched(job: JobEventData) async throws -> Void {
+        return
     }
 
-    public func didDequeue(jobId: String, eventLoop: EventLoop) -> EventLoopFuture<Void> {
-        eventLoop.future()
+    public func didDequeue(jobId: String) async throws -> Void {
+        return
     }
 
-    public func success(jobId: String, eventLoop: EventLoop) -> EventLoopFuture<Void> {
-        eventLoop.future()
+    public func success(jobId: String) async throws -> Void {
+        return
     }
 
-    public func error(jobId: String, error: Error, eventLoop: EventLoop) -> EventLoopFuture<Void> {
-        eventLoop.future()
+    public func error(jobId: String, error: Error) async throws -> Void {
+        return
     }
 }
 

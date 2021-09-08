@@ -3,6 +3,7 @@ import class NIOConcurrencyHelpers.NIOAtomic
 import class NIO.RepeatedTask
 
 /// The command to start the Queue job
+@available(macOS 12.0.0, *)
 public final class QueuesCommand: Command {
     /// See `Command.signature`
     public let signature = Signature()

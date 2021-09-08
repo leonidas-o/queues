@@ -3,6 +3,7 @@ import Foundation
 import Vapor
 
 /// A task that can be queued for future execution.
+@available(macOS 12.0.0, *)
 public protocol Job: AnyJob {
     /// The data associated with a job
     associatedtype Payload
@@ -14,7 +15,7 @@ public protocol Job: AnyJob {
     func dequeue(
         _ context: QueueContext,
         _ payload: Payload
-    ) -> EventLoopFuture<Void>
+    ) async throws -> Void
     
     /// Called when there is an error at any stage of the Job's execution.
     /// - Parameters:
@@ -25,7 +26,7 @@ public protocol Job: AnyJob {
         _ context: QueueContext,
         _ error: Error,
         _ payload: Payload
-    ) -> EventLoopFuture<Void>
+    ) async throws -> Void
 
     /// Called when there was an error and job will be retired.
     ///
@@ -39,6 +40,7 @@ public protocol Job: AnyJob {
     static func parsePayload(_ bytes: [UInt8]) throws -> Payload
 }
 
+@available(macOS 12.0.0, *)
 extension Job where Payload: Codable {
     
     /// Serialize a payload into Data
@@ -54,6 +56,7 @@ extension Job where Payload: Codable {
     }
 }
 
+@available(macOS 12.0.0, *)
 extension Job {
     /// The jobName of the Job
     public static var name: String {
@@ -65,8 +68,8 @@ extension Job {
         _ context: QueueContext,
         _ error: Error,
         _ payload: Payload
-    ) -> EventLoopFuture<Void> {
-        context.eventLoop.makeSucceededFuture(())
+    ) async throws -> Void {
+        return
     }
 
     /// See `Job`.`nextRetryIn`
@@ -78,32 +81,25 @@ extension Job {
         return nextRetryIn(attempt: attempt)
     }
 
-    public func _error(_ context: QueueContext, id: String, _ error: Error, payload: [UInt8]) -> EventLoopFuture<Void> {
+    public func _error(_ context: QueueContext, id: String, _ error: Error, payload: [UInt8]) async throws -> Void {
         var contextCopy = context
         contextCopy.logger[metadataKey: "job_id"] = .string(id)
-        do {
-            return try self.error(contextCopy, error, Self.parsePayload(payload))
-        } catch {
-            return context.eventLoop.makeFailedFuture(error)
-        }
+        return try await self.error(contextCopy, error, Self.parsePayload(payload))
     }
     
-    public func _dequeue(_ context: QueueContext, id: String, payload: [UInt8]) -> EventLoopFuture<Void> {
+    public func _dequeue(_ context: QueueContext, id: String, payload: [UInt8]) async throws -> Void {
         var contextCopy = context
         contextCopy.logger[metadataKey: "job_id"] = .string(id)
-        do {
-            return try self.dequeue(contextCopy, Self.parsePayload(payload))
-        } catch {
-            return context.eventLoop.makeFailedFuture(error)
-        }
+        return try await self.dequeue(contextCopy, Self.parsePayload(payload))
     }
 }
 
 /// A type-erased version of `Job`
+@available(macOS 12.0.0, *)
 public protocol AnyJob {
     /// The name of the `Job`
     static var name: String { get }
-    func _dequeue(_ context: QueueContext, id: String, payload: [UInt8]) -> EventLoopFuture<Void>
-    func _error(_ context: QueueContext, id: String, _ error: Error, payload: [UInt8]) -> EventLoopFuture<Void>
+    func _dequeue(_ context: QueueContext, id: String, payload: [UInt8]) async throws -> Void
+    func _error(_ context: QueueContext, id: String, _ error: Error, payload: [UInt8]) async throws -> Void
     func _nextRetryIn(attempt: Int) -> Int
 }
