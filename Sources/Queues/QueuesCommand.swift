@@ -104,14 +104,14 @@ public final class QueuesCommand: Command {
             self.application.logger.trace("Booting worker: \(i)")
             let eventLoop = self.eventLoopGroup.next()
             let worker = self.application.queues.queue(queueName, on: eventLoop).worker
-            let task = eventLoop.scheduleRepeatedAsyncTask(
+            let task = eventLoop.scheduleRepeatedTask(
                 initialDelay: .seconds(0),
                 delay: worker.queue.configuration.refreshInterval
             ) { task in
                 self.application.logger.trace("Running refresh task")
 
                 // run task
-                return worker.run().map {
+                let _ = worker.run().map {
                     self.application.logger.trace("Worker ran the task successfully")
                     //Check if shutting down
                     if self.isShuttingDown.load() {
