@@ -111,28 +111,60 @@ public final class QueuesCommand: Command {
                 eventLoop = self.eventLoopGroup.next()
             }
             let worker = self.application.queues.queue(queueName, on: eventLoop).worker
-            let task = eventLoop.scheduleRepeatedAsyncTask(
-                initialDelay: .seconds(0),
-                delay: worker.queue.configuration.refreshInterval
-            ) { task in
-                self.application.logger.trace("Running refresh task")
-
-                // run task
-                return worker.run().map {
-                    self.application.logger.trace("Worker ran the task successfully")
-                    //Check if shutting down
-                    if self.isShuttingDown.load() {
-                        self.application.logger.trace("Shutting down, cancelling the task")
-                        task.cancel()
-                    }
-                }.recover { error in
-                    worker.queue.logger.error("Job run failed: \(error)")
-                }
+            
+            let task: RepeatedTask
+            if queueName.isSequential {
+                task = scheduleRepeatedTask(eventLoop, worker)
+            } else {
+                task = scheduleRepeatedAsyncTask(eventLoop, worker)
             }
+            
             self.jobTasks.append(task)
         }
 
         self.application.logger.trace("Finished adding jobTasks, total count: \(jobTasks.count)")
+    }
+    
+    private func scheduleRepeatedAsyncTask(_ eventLoop: EventLoop, _ worker: QueueWorker) -> RepeatedTask {
+        return eventLoop.scheduleRepeatedAsyncTask(
+            initialDelay: .seconds(0),
+            delay: worker.queue.configuration.refreshInterval
+        ) { task in
+            self.application.logger.trace("Running refresh task")
+
+            // run task
+            return worker.run().map {
+                self.application.logger.trace("Worker ran the task successfully")
+                //Check if shutting down
+                if self.isShuttingDown.load() {
+                    self.application.logger.trace("Shutting down, cancelling the task")
+                    task.cancel()
+                }
+            }.recover { error in
+                worker.queue.logger.error("Job run failed: \(error)")
+            }
+        }
+    }
+    
+    private func scheduleRepeatedTask(_ eventLoop: EventLoop, _ worker: QueueWorker) -> RepeatedTask {
+        return eventLoop.scheduleRepeatedTask(
+            initialDelay: .seconds(0),
+            delay: worker.queue.configuration.refreshInterval
+        ) { task in
+            self.application.logger.trace("Running refresh task")
+
+            // run task
+            let _ = worker.run().map {
+                self.application.logger.trace("Worker ran the task successfully")
+                //Check if shutting down
+                if self.isShuttingDown.load() {
+                    self.application.logger.trace("Shutting down, cancelling the task")
+                    task.cancel()
+                }
+            }.recover { error in
+                worker.queue.logger.error("Job run failed: \(error)")
+            }
+        }
     }
     
     /// Starts the scheduled jobs in-process
