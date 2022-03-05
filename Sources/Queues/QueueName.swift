@@ -5,12 +5,18 @@ public struct QueueName {
 
     /// The name of the queue
     public let string: String
+    
+    /// If the queue is executing the jobs sequentially
+    public let isSequential: Bool
 
     /// Creates a new `QueueType`
     ///
-    /// - Parameter name: The name of the `QueueType`
-    public init(string: String) {
+    /// - Parameters:
+    ///   - name: The name of the `QueueType`
+    ///   - isSequential: If the queue is executing the jobs sequentially
+    public init(string: String, isSequential: Bool = false) {
         self.string = string
+        self.isSequential = isSequential
     }
 
     /// Makes the name of the queue

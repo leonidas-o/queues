@@ -99,6 +99,12 @@ extension Application {
             )
         }
         
+        /// stores eventLoop for sequential execution
+        /// - Parameter eventLoop: The eventLoop to store
+        public func set(_ eventLoop: EventLoop) {
+            self.configuration.eventLoop = eventLoop
+        }
+        
         /// Adds a new queued job
         /// - Parameter job: The job to add
         public func add<J>(_ job: J) where J: Job {

@@ -1,3 +1,4 @@
+import NIOCore
 /// A `Service` to configure `Queues`s
 public struct QueuesConfiguration {
     /// The number of seconds to wait before checking for the next job. Defaults to `1`
@@ -28,6 +29,9 @@ public struct QueuesConfiguration {
     
     // Arbitrary user info to be stored
     public var userInfo: [AnyHashable: Any]
+    
+    /// The eventLoop ot be used for sequential execution
+    public var eventLoop: EventLoop?
     
     var jobs: [String: AnyJob]
     var scheduledJobs: [AnyScheduledJob]
